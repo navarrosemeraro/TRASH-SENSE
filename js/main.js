@@ -1,7 +1,15 @@
-// Controla a navegação entre as telas do menu lateral e sincroniza os dados
+const TITULOS_ABAS = {
+  home: "Visão Executiva",
+  overview: "Mapa de Lixeiras",
+  bins: "Contêineres Monitorados",
+  routes: "Rotas de Coleta",
+  goals: "Impacto e Metas"
+};
+
 function alternarAba(abaAlvo) {
   const botoes = document.querySelectorAll(".nav-item");
   const secoes = document.querySelectorAll(".view-section");
+  const titulo = document.getElementById("topbar-heading");
 
   botoes.forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.view === abaAlvo);
@@ -11,16 +19,71 @@ function alternarAba(abaAlvo) {
     secao.classList.toggle("hidden", secao.id !== `view-${abaAlvo}`);
   });
 
-  // Garante que o mapa redimensione corretamente ao voltar para a Visão Geral
+  if (titulo && TITULOS_ABAS[abaAlvo]) {
+    titulo.textContent = TITULOS_ABAS[abaAlvo];
+  }
+
   if (abaAlvo === "overview" && typeof mapa !== "undefined" && mapa) {
     setTimeout(() => mapa.invalidateSize(), 80);
   }
 
+  renderizarPaginaInicial();
   renderizarTabelaLixeiras();
   renderizarComparativoRotas();
 }
 
-// Renderiza a aba "Lixeiras (1.200 L)" com todos os pontos de Niterói
+// Sincroniza a Página Inicial com os dados reais dos 8 contêineres
+function renderizarPaginaInicial() {
+  const total = pontos.length;
+  const criticos = pontos.filter((p) => p.ocupacao >= TRASHSENSE_CONFIG.limiteCritico).length;
+  const atencao = pontos.filter(
+    (p) =>
+      p.ocupacao >= TRASHSENSE_CONFIG.limiteAtencao &&
+      p.ocupacao < TRASHSENSE_CONFIG.limiteCritico
+  ).length;
+  const disponiveis = total - criticos - atencao;
+
+  const pctOk = Math.round((disponiveis / total) * 100);
+  const pctWarn = Math.round((atencao / total) * 100);
+  const pctCritical = 100 - pctOk - pctWarn;
+
+  // 4 Cards superiores
+  const elTotal = document.getElementById("home-total-bins");
+  if (elTotal) elTotal.textContent = total;
+  document.getElementById("home-pct-ok").textContent = `${pctOk}%`;
+  document.getElementById("home-pct-warn").textContent = `${pctWarn}%`;
+  document.getElementById("home-pct-critical").textContent = `${pctCritical}%`;
+
+  // Card escuro de Rotas
+  document.getElementById("home-active-routes").textContent = criticos > 0 ? "1" : "0";
+
+  // Indicadores da operação (litros atuais + já coletados + economia)
+  const litrosAtuais = pontos.reduce(
+    (acc, p) => acc + Math.round((p.ocupacao / 100) * TRASHSENSE_CONFIG.capacidadeLitros),
+    0
+  );
+  const totalVolume = litrosAtuais + (typeof litrosColetadosAcumulados !== "undefined" ? litrosColetadosAcumulados : 0);
+  document.getElementById("home-waste-volume").textContent = `${totalVolume.toLocaleString("pt-BR")} L`;
+
+  const evitadas = total - criticos;
+  const economia =
+    criticos === 0 ? 100 : Math.min(35, Math.max(15, Math.round((evitadas / total) * 38)));
+  document.getElementById("home-route-saving").textContent = `-${economia}%`;
+
+  // Gráfico: média real de ocupação de Praias da Baía (UFF / Icaraí)
+  const mediaOcupacao = Math.round(
+    pontos.reduce((acc, p) => acc + p.ocupacao, 0) / total
+  );
+  document.getElementById("bar-val-baia").textContent = `${mediaOcupacao}%`;
+  document.getElementById("bar-fill-baia").style.height = `${mediaOcupacao}%`;
+
+  // Carimbo de horário atualizado
+  const agora = new Date();
+  const dataFmt = agora.toLocaleDateString("pt-BR");
+  const horaFmt = agora.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  document.getElementById("home-last-update").textContent = `${dataFmt} às ${horaFmt}`;
+}
+
 function renderizarTabelaLixeiras() {
   const tbody = document.getElementById("bins-table-body");
   if (!tbody) return;
@@ -61,7 +124,6 @@ function renderizarTabelaLixeiras() {
   });
 }
 
-// Renderiza a aba "Rotas de Coleta" comparando o modelo fixo vs. TrashSense
 function renderizarComparativoRotas() {
   const container = document.getElementById("routes-comparison-cards");
   if (!container) return;
@@ -69,18 +131,28 @@ function renderizarComparativoRotas() {
   const base = TRASHSENSE_CONFIG.pontoPartida;
   const criticos = pontos.filter((p) => p.ocupacao >= TRASHSENSE_CONFIG.limiteCritico);
   const trajetoFixo = ordenarTrajeto(base.coords, pontos);
-  const trajetoInteligente = criticos.length > 0 ? ordenarTrajeto(base.coords, criticos) : { ordenados: [], distanciaTotal: 0 };
+  const trajetoInteligente =
+    criticos.length > 0 ? ordenarTrajeto(base.coords, criticos) : { ordenados: [], distanciaTotal: 0 };
 
   const kmFixo = trajetoFixo.distanciaTotal.toFixed(1).replace(".", ",");
   const kmInteligente = trajetoInteligente.distanciaTotal.toFixed(1).replace(".", ",");
   const economiaReal =
     criticos.length === 0
       ? 100
-      : Math.max(0, Math.round(((trajetoFixo.distanciaTotal - trajetoInteligente.distanciaTotal) / trajetoFixo.distanciaTotal) * 100));
+      : Math.max(
+          0,
+          Math.round(
+            ((trajetoFixo.distanciaTotal - trajetoInteligente.distanciaTotal) /
+              trajetoFixo.distanciaTotal) *
+              100
+          )
+        );
 
   const listaParadas =
     trajetoInteligente.ordenados.length > 0
-      ? trajetoInteligente.ordenados.map((p, idx) => `${idx + 1}. ${p.nome} (${p.ocupacao}%)`).join(" &rarr; ")
+      ? trajetoInteligente.ordenados
+          .map((p, idx) => `${idx + 1}. ${p.nome} (${p.ocupacao}%)`)
+          .join(" &rarr; ")
       : "Nenhuma lixeira atingiu 80% no momento.";
 
   container.innerHTML = `
@@ -110,10 +182,10 @@ function renderizarComparativoRotas() {
   `;
 }
 
-// Integra a atualização das novas abas sempre que o mapa ou os sensores mudarem
 const atualizarInterfaceBase = atualizarInterface;
 atualizarInterface = function () {
   atualizarInterfaceBase();
+  renderizarPaginaInicial();
   renderizarTabelaLixeiras();
   renderizarComparativoRotas();
 };
@@ -123,6 +195,11 @@ document.addEventListener("DOMContentLoaded", () => {
     btn.addEventListener("click", () => alternarAba(btn.dataset.view));
   });
 
+  const btnHomeRoutes = document.getElementById("btn-home-to-routes");
+  if (btnHomeRoutes) {
+    btnHomeRoutes.addEventListener("click", () => alternarAba("routes"));
+  }
+
   const btnIrMapa = document.getElementById("btn-go-route-map");
   if (btnIrMapa) {
     btnIrMapa.addEventListener("click", () => {
@@ -131,6 +208,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  renderizarPaginaInicial();
   renderizarTabelaLixeiras();
   renderizarComparativoRotas();
 });

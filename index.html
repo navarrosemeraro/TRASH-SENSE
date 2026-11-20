@@ -6,7 +6,7 @@
   <title>TrashSense — Gestão Inteligente de Coleta</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="css/tokens.css" />
   <link rel="stylesheet" href="css/style.css" />
@@ -22,7 +22,7 @@
       </div>
       <div class="brand-info">
         <h1>TrashSense</h1>
-        <span>Coleta Urbana Inteligente</span>
+        <span>Prefeitura de Niterói • Piloto</span>
       </div>
     </div>
 
@@ -31,7 +31,8 @@
     </div>
 
     <nav class="nav-menu">
-      <button class="nav-item active" data-view="overview">Visão Geral</button>
+      <button class="nav-item active" data-view="home">Página Inicial</button>
+      <button class="nav-item" data-view="overview">Mapa de Lixeiras</button>
       <button class="nav-item" data-view="bins">Lixeiras (1.200 L)</button>
       <button class="nav-item" data-view="routes">Rotas de Coleta</button>
       <button class="nav-item" data-view="goals">Impacto e Metas</button>
@@ -49,10 +50,10 @@
   <!-- CONTEÚDO PRINCIPAL -->
   <main class="main-content">
     
-    <!-- CABEÇALHO E AÇÕES -->
+    <!-- CABEÇALHO E AÇÕES GLOBAIS -->
     <header class="topbar">
       <div class="page-title">
-        <h2>Painel de Monitoramento</h2>
+        <h2 id="topbar-heading">Visão Executiva</h2>
         <span class="badge-pill">Contêineres • 1.200 L</span>
       </div>
 
@@ -63,8 +64,196 @@
       </div>
     </header>
 
-    <!-- ABA 1: VISÃO GERAL (MAPA + RESUMO) -->
-    <div id="view-overview" class="view-section">
+    <!-- ABA 0: PÁGINA INICIAL (BASEADA NA REFERÊNCIA VISUAL) -->
+    <div id="view-home" class="view-section">
+      
+      <!-- Banner Superior -->
+      <section class="home-hero-banner">
+        <div>
+          <h3>Gestão inteligente de lixeiras e rotas de coleta</h3>
+          <p>Monitoramento em tempo real do piloto UFF / Icaraí (Praias da Baía)</p>
+        </div>
+        <div class="home-update-stamp">
+          <span class="sync-icon">&#8635;</span>
+          <span>Última atualização: <strong id="home-last-update">20/11/2026 • Agora</strong></span>
+        </div>
+      </section>
+
+      <!-- Linha de 4 Cards Superiores (Dados Reais dos 8 Contêineres) -->
+      <section class="home-stat-grid">
+        <article class="home-stat-card accent-olive">
+          <div class="stat-icon-box olive">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+          </div>
+          <div class="stat-content">
+            <strong id="home-total-bins">8</strong>
+            <span>Lixeiras ativas no piloto</span>
+          </div>
+        </article>
+
+        <article class="home-stat-card accent-moss">
+          <div class="stat-icon-box moss">!</div>
+          <div class="stat-content">
+            <strong id="home-pct-ok">50%</strong>
+            <span>Com capacidade adequada</span>
+          </div>
+        </article>
+
+        <article class="home-stat-card accent-warn">
+          <div class="stat-icon-box warn">&#9888;</div>
+          <div class="stat-content">
+            <strong id="home-pct-warn">25%</strong>
+            <span>Próximas da lotação</span>
+          </div>
+        </article>
+
+        <article class="home-stat-card accent-critical">
+          <div class="stat-icon-box critical">!</div>
+          <div class="stat-content">
+            <strong id="home-pct-critical">25%</strong>
+            <span>Precisam de coleta urgente</span>
+          </div>
+        </article>
+      </section>
+
+      <!-- Grade Inferior da Página Inicial -->
+      <section class="home-bottom-grid">
+        
+        <!-- Coluna Esquerda: Card Escuro Rotas + Indicadores -->
+        <div class="home-left-stack">
+          
+          <!-- Banner Escuro "Rotas de Coletas" com Caminhão -->
+          <article class="home-dark-route-card">
+            <div class="dark-route-info">
+              <h4>Rotas de Coletas</h4>
+              <div class="dark-route-row">
+                <div class="dark-route-number">
+                  <strong id="home-active-routes">1</strong>
+                  <span>Rota prioritária<br/>no setor ativo</span>
+                </div>
+                <button type="button" class="btn-dark-link" id="btn-home-to-routes">
+                  Ver todas as rotas <span>&rsaquo;</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Ilustração do Caminhão de Coleta na Paleta TrashSense -->
+            <div class="truck-illustration" aria-hidden="true">
+              <svg viewBox="0 0 180 110" width="165" height="100">
+                <!-- Caçamba Verde-Oliva -->
+                <rect x="62" y="18" width="98" height="58" rx="8" fill="#78924B" />
+                <path d="M 148,18 L 166,42 L 166,76 L 148,76 Z" fill="#526C2A" />
+                <line x1="85" y1="26" x2="85" y2="68" stroke="#526C2A" stroke-width="3" />
+                <line x1="108" y1="26" x2="108" y2="68" stroke="#526C2A" stroke-width="3" />
+                <line x1="131" y1="26" x2="131" y2="68" stroke="#526C2A" stroke-width="3" />
+                <!-- Cabine Branca/Cinza -->
+                <path d="M 18,46 L 34,26 L 60,26 L 60,76 L 18,76 Z" fill="#E3E5E4" />
+                <path d="M 25,45 L 36,31 L 53,31 L 53,45 Z" fill="#35393B" />
+                <rect x="14" y="64" width="154" height="12" rx="4" fill="#35393B" />
+                <!-- Rodas -->
+                <circle cx="42" cy="80" r="14" fill="#1E2123" stroke="#B7BEA9" stroke-width="3" />
+                <circle cx="42" cy="80" r="5" fill="#78924B" />
+                <circle cx="112" cy="80" r="14" fill="#1E2123" stroke="#B7BEA9" stroke-width="3" />
+                <circle cx="112" cy="80" r="5" fill="#78924B" />
+                <circle cx="144" cy="80" r="14" fill="#1E2123" stroke="#B7BEA9" stroke-width="3" />
+                <circle cx="144" cy="80" r="5" fill="#78924B" />
+              </svg>
+            </div>
+          </article>
+
+          <!-- Card "Indicadores do Piloto" -->
+          <article class="card home-indicators-card">
+            <div class="indicators-header">
+              <span>Indicadores da Operação (UFF / Icaraí)</span>
+            </div>
+            <div class="indicators-split">
+              <div class="indicator-metric">
+                <div class="ind-badge-icon">&#9878;</div>
+                <div>
+                  <strong id="home-waste-volume">5.604 L</strong>
+                  <span>Volume monitorado + coletado</span>
+                </div>
+              </div>
+              <div class="indicator-metric">
+                <div class="ind-badge-icon leaf">&#127807;</div>
+                <div>
+                  <strong id="home-route-saving">-28%</strong>
+                  <span>Economia estimada no trajeto</span>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <!-- Coluna Direita: Gráfico por Regiões de Niterói -->
+        <article class="card home-chart-card">
+          <div class="chart-header">
+            <h4>Ocupação Média por Regiões de Niterói (%)</h4>
+            <span class="chart-tag">Praias da Baía: sensores ativos</span>
+          </div>
+
+          <div class="region-chart-area">
+            <div class="chart-y-axis">
+              <span>100%</span>
+              <span>75%</span>
+              <span>50%</span>
+              <span>25%</span>
+              <span>0%</span>
+            </div>
+
+            <div class="chart-bars-grid">
+              <div class="bar-col active-region">
+                <span class="bar-value" id="bar-val-baia">58%</span>
+                <div class="bar-track">
+                  <div class="bar-fill active" id="bar-fill-baia" style="height: 58%;"></div>
+                </div>
+                <span class="bar-label">Praias da Baía</span>
+              </div>
+
+              <div class="bar-col planned-region">
+                <span class="bar-value">—</span>
+                <div class="bar-track">
+                  <div class="bar-fill planned" style="height: 14%;"></div>
+                </div>
+                <span class="bar-label">Norte</span>
+              </div>
+
+              <div class="bar-col planned-region">
+                <span class="bar-value">—</span>
+                <div class="bar-track">
+                  <div class="bar-fill planned" style="height: 14%;"></div>
+                </div>
+                <span class="bar-label">Oceânica</span>
+              </div>
+
+              <div class="bar-col planned-region">
+                <span class="bar-value">—</span>
+                <div class="bar-track">
+                  <div class="bar-fill planned" style="height: 14%;"></div>
+                </div>
+                <span class="bar-label">Pendotiba</span>
+              </div>
+
+              <div class="bar-col planned-region">
+                <span class="bar-value">—</span>
+                <div class="bar-track">
+                  <div class="bar-fill planned" style="height: 14%;"></div>
+                </div>
+                <span class="bar-label">Leste</span>
+              </div>
+            </div>
+          </div>
+
+          <p class="chart-footnote">
+            * Os 8 contêineres ativos estão instalados em <strong>Praias da Baía</strong> (UFF e Icaraí). As demais 4 regiões administrativas de Niterói estão preparadas para expansão.
+          </p>
+        </article>
+
+      </section>
+    </div>
+
+    <!-- ABA 1: MAPA DE LIXEIRAS -->
+    <div id="view-overview" class="view-section hidden">
       <section class="kpi-grid">
         <article class="card">
           <div class="card-label">Economia Estimada no Trajeto</div>
@@ -173,7 +362,7 @@
       </div>
     </div>
 
-    <!-- ABA 4: IMPACTO E METAS (PARÂMETROS DA CARTILHA) -->
+    <!-- ABA 4: IMPACTO E METAS -->
     <div id="view-goals" class="view-section hidden">
       <div class="goals-grid">
         <article class="card">

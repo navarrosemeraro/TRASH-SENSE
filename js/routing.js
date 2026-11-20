@@ -1,5 +1,6 @@
 let camadaRota = null;
 let rotaTracada = false;
+let litrosColetadosAcumulados = 0;
 
 // Calcula distância aproximada entre duas coordenadas (em km)
 function calcularDistanciaKm(coordA, coordB) {
@@ -136,7 +137,11 @@ function desenharRotaNoMapa() {
 function executarColeta() {
   pontos = pontos.map((ponto) => {
     if (ponto.ocupacao >= TRASHSENSE_CONFIG.limiteCritico) {
-      return { ...ponto, ocupacao: 6 }; // Lixeira esvaziada
+      const litrosRemovidos = Math.round(
+        ((ponto.ocupacao - 6) / 100) * TRASHSENSE_CONFIG.capacidadeLitros
+      );
+      litrosColetadosAcumulados += Math.max(0, litrosRemovidos);
+      return { ...ponto, ocupacao: 6 };
     }
     return ponto;
   });
@@ -165,13 +170,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   btnColeta.addEventListener("click", () => {
     if (!rotaTracada) {
+      if (typeof alternarAba === "function") alternarAba("overview");
       desenharRotaNoMapa();
     } else {
       executarColeta();
     }
   });
 
-  // Se simular mais descartes com a rota já aberta, recalcula automaticamente
   btnSimular.addEventListener("click", () => {
     if (rotaTracada) {
       desenharRotaNoMapa();
