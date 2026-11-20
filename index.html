@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TrashSense — Gestão Inteligente de Coleta</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- SIDEBAR ESQUERDA -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-icon">
+        <img src="assests/trashsense-logo.png" alt="TrashSense" onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';" />
+        <span class="brand-fallback">TS</span>
+      </div>
+      <div class="brand-info">
+        <h1>TrashSense</h1>
+        <span>Coleta Urbana Inteligente</span>
+      </div>
+    </div>
+
+    <div class="sidebar-search">
+      <input type="text" id="search-input" placeholder="Buscar campus ou ponto..." />
+    </div>
+
+    <nav class="nav-menu">
+      <button class="nav-item active" data-view="overview">Visão Geral</button>
+      <button class="nav-item" data-view="bins">Lixeiras (1.200 L)</button>
+      <button class="nav-item" data-view="routes">Rotas de Coleta</button>
+      <button class="nav-item" data-view="goals">Impacto e Metas</button>
+    </nav>
+
+    <div class="sidebar-footer-card">
+      <div class="status-header">
+        <span class="pulse-dot"></span>
+        <span>Sensores Conectados</span>
+      </div>
+      <p>8 contêineres enviando nível de ocupação em tempo real.</p>
+    </div>
+  </aside>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <main class="main-content">
+    
+    <!-- CABEÇALHO E AÇÕES -->
+    <header class="topbar">
+      <div class="page-title">
+        <h2>Painel de Monitoramento</h2>
+        <span class="badge-pill">Contêineres • 1.200 L</span>
+      </div>
+
+      <div class="control-bar">
+        <div class="location-chip">Região: <strong>Niterói • UFF / Icaraí</strong></div>
+        <button class="btn-secondary" id="btn-step">+ Simular Descarte</button>
+        <button class="btn-primary" id="btn-collect">Traçar Rota de Coleta</button>
+      </div>
+    </header>
+
+    <!-- ABA 1: VISÃO GERAL (MAPA + RESUMO) -->
+    <div id="view-overview" class="view-section">
+      <section class="kpi-grid">
+        <article class="card">
+          <div class="card-label">Economia Estimada no Trajeto</div>
+          <div class="kpi-hero">
+            <strong id="kpi-economy">-28%</strong>
+            <span>de combustível e desgaste (Meta: 20% a 35%)</span>
+          </div>
+          <div class="kpi-split">
+            <div class="split-item">
+              <small>Lixeiras Cheias (Coletar agora)</small>
+              <span class="val" id="kpi-critical">2 de 8</span>
+              <span class="tag">Prioridade alta</span>
+            </div>
+            <div class="split-item">
+              <small>Paradas Desnecessárias Evitadas</small>
+              <span class="val" id="kpi-skipped">6 lixeiras</span>
+              <span class="tag">Ainda vazias</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-label">Situação Geral dos Contêineres</div>
+          <div class="card-subtitle">Distribuição atual dos 8 pontos monitorados na região</div>
+          
+          <div class="segmented-bar">
+            <div class="seg-ok" id="seg-ok" style="width: 50%"></div>
+            <div class="seg-warn" id="seg-warn" style="width: 25%"></div>
+            <div class="seg-full" id="seg-full" style="width: 25%"></div>
+          </div>
+
+          <div class="legend-row">
+            <span class="legend-item"><i class="dot" style="background: var(--verde-oliva)"></i><span id="legend-ok">Disponíveis (50%)</span></span>
+            <span class="legend-item"><i class="dot" style="background: var(--verde-acinzentado)"></i><span id="legend-warn">Quase cheias (25%)</span></span>
+            <span class="legend-item"><i class="dot" style="background: var(--verde-musgo)"></i><span id="legend-full">Cheias (25%)</span></span>
+          </div>
+        </article>
+      </section>
+
+      <section class="workspace-grid">
+        <div class="map-panel">
+          <div class="map-floating-bar">
+            <span>Mapa • UFF e Icaraí</span>
+            <span style="color: var(--verde-oliva);">● Disponível</span>
+            <span style="color: #D49B27;">● Atenção</span>
+            <span style="color: #C84B31;">● Cheia (Coletar)</span>
+          </div>
+          <div id="map"></div>
+        </div>
+
+        <aside class="card detail-panel">
+          <div class="detail-header">
+            <h3 id="detail-name">UFF • Praia Vermelha</h3>
+            <span class="status-badge" id="detail-badge">82% • Cheia</span>
+          </div>
+
+          <div>
+            <small id="detail-volume" style="color: var(--text-muted); font-size: 0.78rem;">Volume ocupado (984 L de 1.200 L)</small>
+            <div class="fill-meter">
+              <div class="fill-meter-bar" id="detail-bar"></div>
+            </div>
+          </div>
+
+          <ul class="detail-list">
+            <li><span>Identificação</span><strong id="detail-id">TS-01 (São Domingos)</strong></li>
+            <li><span>Ação recomendada</span><strong id="detail-action">Incluir na próxima rota</strong></li>
+            <li><span>Sensor de nível</span><strong>Ativo (baixo consumo)</strong></li>
+            <li><span>Bateria estimada</span><strong>14 meses restantes</strong></li>
+          </ul>
+        </aside>
+      </section>
+    </div>
+
+    <!-- ABA 2: LISTA DE LIXEIRAS (1.200 L) -->
+    <div id="view-bins" class="view-section hidden">
+      <article class="card">
+        <div class="section-header-row">
+          <div>
+            <h3>Contêineres Monitorados (Capacidade: 1.200 L)</h3>
+            <p class="card-subtitle" style="margin-bottom: 0;">Acompanhamento individual do nível de ocupação em cada ponto da UFF e Icaraí.</p>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table class="ts-table">
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Localização</th>
+                <th>Bairro</th>
+                <th>Ocupação Atual</th>
+                <th>Status</th>
+                <th>Ação</th>
+              </tr>
+            </thead>
+            <tbody id="bins-table-body"></tbody>
+          </table>
+        </div>
+      </article>
+    </div>
+
+    <!-- ABA 3: COMPARATIVO DE ROTAS -->
+    <div id="view-routes" class="view-section hidden">
+      <div class="routes-grid" id="routes-comparison-cards"></div>
+      <div style="display: flex; justify-content: flex-end;">
+        <button type="button" class="btn-primary" id="btn-go-route-map">Visualizar Trajeto no Mapa</button>
+      </div>
+    </div>
+
+    <!-- ABA 4: IMPACTO E METAS (PARÂMETROS DA CARTILHA) -->
+    <div id="view-goals" class="view-section hidden">
+      <div class="goals-grid">
+        <article class="card">
+          <span class="badge-pill">Metas e Resultados (OKRs)</span>
+          <h3 class="goal-title">Eficiência Operacional e Sustentabilidade</h3>
+          <ul class="goal-checklist">
+            <li>
+              <strong>Redução de 20% a 35% na rota</strong>
+              <span>Evita deslocamentos em contêineres vazios, economizando combustível e manutenção.</span>
+            </li>
+            <li>
+              <strong>Autonomia superior a 12 meses</strong>
+              <span>O sensor permanece em modo de repouso na maior parte do dia para poupar bateria.</span>
+            </li>
+            <li>
+              <strong>Coleta antes do transbordamento</strong>
+              <span>Alertas automáticos ao atingir 80% impedem o acúmulo de resíduos nas calçadas.</span>
+            </li>
+          </ul>
+        </article>
+
+        <article class="card">
+          <span class="badge-pill">Priorização (Matriz GUT)</span>
+          <h3 class="goal-title">Por que começar pelos contêineres de 1.200 L?</h3>
+          <div class="gut-list">
+            <div class="gut-item">
+              <div class="gut-top">
+                <strong>1. Transbordamento em contêineres fechados</strong>
+                <span class="gut-score">Nota 100 (5×5×4)</span>
+              </div>
+              <p>Alta gravidade e urgência, com solução direta e de baixo custo usando sensor de nível na tampa.</p>
+            </div>
+            <div class="gut-item">
+              <div class="gut-top">
+                <strong>2. Rotas fixas com caminhões semicheios</strong>
+                <span class="gut-score">Nota 64 (4×4×4)</span>
+              </div>
+              <p>Resolvido pela roteirização sob demanda integrada ao painel de monitoramento.</p>
+            </div>
+            <div class="gut-item">
+              <div class="gut-top">
+                <strong>3. Descarte irregular de entulho em vias</strong>
+                <span class="gut-score">Expansão Futura</span>
+              </div>
+              <p>Demanda monitoramento externo por câmeras ou balanças de solo em etapas posteriores.</p>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/sensorNode.js"></script>
+  <script src="js/routing.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

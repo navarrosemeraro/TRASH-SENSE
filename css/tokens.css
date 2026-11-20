@@ -1,0 +1,36 @@
+:root {
+  /* Paleta Oficial TrashSense */
+  --verde-musgo: #526C2A;        /* Cor principal */
+  --verde-oliva: #78924B;        /* Cor secundária */
+  --verde-salvia: #8C977D;       /* Apoio e detalhes */
+  --verde-acinzentado: #B7BEA9; /* Fundos suaves */
+  --cinza-grafite: #35393B;      /* Textos e ícones */
+  --preto-carvao: #1E2123;       /* Títulos e contrastes */
+  --cinza-claro: #E3E5E4;        /* Fundo geral da página */
+  --branco: #FFFFFF;             /* Superfície dos cards e menus */
+
+  /* Mapeamento Claro com Foco no Verde */
+  --bg-app: var(--cinza-claro);
+  --bg-sidebar: var(--branco);
+  --bg-card: var(--branco);
+  --bg-soft-green: rgba(183, 190, 169, 0.28);
+  --bg-badge-green: rgba(82, 108, 42, 0.12);
+
+  --border-subtle: rgba(140, 151, 125, 0.35);
+  --border-green: rgba(82, 108, 42, 0.45);
+
+  --text-strong: var(--preto-carvao);
+  --text-body: var(--cinza-grafite);
+  --text-muted: #5F6858;
+
+  /* Estados das Lixeiras */
+  --status-ok: var(--verde-oliva);
+  --status-warn: #D49B27;
+  --status-critical: #C84B31;
+
+  /* Tipografia e Medidas */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --shadow-card: 0 2px 10px rgba(30, 33, 35, 0.05);
+}
